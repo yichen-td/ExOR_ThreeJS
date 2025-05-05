@@ -1,11 +1,11 @@
 //#version 450
 //#extension GL_ARB_separate_shader_objects : enable
 
-precision mediump float;
+precision highp float;
 #define MATH_PI 3.1415926535897932384626433832795
 //#define MATH_INV_PI (1.0 / MATH_PI)
 
-uniform samplerCube uCubeMap;
+uniform samplerCube u_cubemapTexture;
 
 // enum
 const int cLambertian = 0;
@@ -21,6 +21,12 @@ uniform  float u_lodBias;
 uniform  int u_distribution; // enum
 uniform int u_currentFace;
 uniform int u_isGeneratingLUT;
+
+// 0: Byte Target Texture (normalized) 
+// 1: Float Target Texture
+uniform int u_floatTexture; 
+
+uniform  float u_intensityScale;
 
 //layout (location = 0) in vec2 inUV;
 in vec2 texCoord;
@@ -282,7 +288,7 @@ float computeLod(float pdf)
 
 vec3 filterColor(vec3 N)
 {
-    //return  textureLod(uCubeMap, N, 3.0).rgb;
+    //return  textureLod(u_cubemapTexture, N, 3.0).rgb;
     vec3 color = vec3(0.f);
     float weight = 0.0f;
 
@@ -302,7 +308,7 @@ vec3 filterColor(vec3 N)
         if(u_distribution == cLambertian)
         {
             // sample lambertian at a lower resolution to avoid fireflies
-            vec3 lambertian = textureLod(uCubeMap, H, lod).rgb;
+            vec3 lambertian = textureLod(u_cubemapTexture, H, lod).rgb * u_intensityScale;
 
             //// the below operations cancel each other out
             // lambertian *= NdotH; // lamberts law
@@ -325,7 +331,7 @@ vec3 filterColor(vec3 N)
                     // without this the roughness=0 lod is too high
                     lod = u_lodBias;
                 }
-                vec3 sampleColor = textureLod(uCubeMap, L, lod).rgb;
+                vec3 sampleColor = textureLod(u_cubemapTexture, L, lod).rgb * u_intensityScale;
                 color += sampleColor * NdotL;
                 weight += NdotL;
             }
@@ -447,8 +453,20 @@ void main()
     else
     {
         color = LUT(texCoord.x, texCoord.y);
+        fragmentColor.rgb = color;
+        fragmentColor.a = 1.0;
+        return;
+    }
+ 
+    fragmentColor.a = 1.0;
+    
+    if(u_floatTexture == 0) 
+    { 
+        float maxV = max(max(color.r,color.g),color.b);   
+        color /= u_intensityScale;       
+        color = clamp(color, 0.0f, 1.0f);
     }
     
-    fragmentColor = vec4(color,1.0);
+    fragmentColor.rgb = color;
 }
 

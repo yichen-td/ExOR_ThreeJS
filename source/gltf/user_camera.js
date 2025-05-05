@@ -42,7 +42,7 @@ class UserCamera extends gltfCamera
      */
     setVerticalFoV(yfov)
     {
-        this.yfov = yfov;
+        this.perspective.yfov = yfov;
     }
 
     /**
@@ -248,8 +248,13 @@ class UserCamera extends gltfCamera
      * @param {Gltf} gltf 
      * @param {number} sceneIndex 
      */
-    fitViewToScene(gltf, sceneIndex)
+    resetView(gltf, sceneIndex)
     {
+        if(gltf === undefined)
+        {
+            return;
+        }
+
         this.transform = mat4.create();
         this.rotAroundX = 0;
         this.rotAroundY = 0;
@@ -262,11 +267,33 @@ class UserCamera extends gltfCamera
 
     }
 
+    /**
+     * Fit view to updated canvas size without changing rotation if distance is incorrect
+     * @param {Gltf} gltf 
+     * @param {number} sceneIndex 
+     */
+    fitViewToScene(gltf, sceneIndex)
+    {
+        if(gltf === undefined)
+        {
+            return;
+        }
+
+        this.transform = mat4.create();
+        getSceneExtents(gltf, sceneIndex, this.sceneExtents.min, this.sceneExtents.max);
+        this.fitDistanceToExtents(this.sceneExtents.min, this.sceneExtents.max);
+        this.fitCameraTargetToExtents(this.sceneExtents.min, this.sceneExtents.max);
+
+        this.fitPanSpeedToScene(this.sceneExtents.min, this.sceneExtents.max);
+        this.fitCameraPlanesToExtents(this.sceneExtents.min, this.sceneExtents.max);
+
+    }
+
     fitDistanceToExtents(min, max)
     {
         const maxAxisLength = Math.max(max[0] - min[0], max[1] - min[1]);
-        const yfov = this.yfov;
-        const xfov = this.yfov * this.aspectRatio;
+        const yfov = this.perspective.yfov;
+        const xfov = this.perspective.yfov * (this.perspective.aspectRatio ?? 1);
 
         const yZoom = maxAxisLength / 2 / Math.tan(yfov / 2);
         const xZoom = maxAxisLength / 2 / Math.tan(xfov / 2);
@@ -298,8 +325,8 @@ class UserCamera extends gltfCamera
         // minimum near plane value needs to depend on far plane value to avoid z fighting or too large near planes
         zNear = Math.max(zNear, zFar / MaxNearFarRatio);
 
-        this.znear = zNear;
-        this.zfar = zFar;
+        this.perspective.znear = zNear;
+        this.perspective.zfar = zFar;
     }
 }
 

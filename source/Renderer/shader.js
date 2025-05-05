@@ -67,13 +67,19 @@ class gltfShader
             {
                 this.unknownUniforms.push(name);
             }
-            return -1;
+            return null;
         }
         return uniform.loc;
     }
 
     updateUniform(objectName, object, log = false)
     {
+        if (object === undefined) {
+            if(log) {
+                console.log("update uniform: object undefined");
+            }
+            return;
+        }
         if (object instanceof UniformStruct)
         {
             this.updateUniformStruct(objectName, object, log);

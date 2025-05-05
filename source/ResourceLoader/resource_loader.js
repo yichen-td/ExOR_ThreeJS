@@ -1,5 +1,3 @@
-
-import axios from 'axios';
 import { glTF } from '../gltf/gltf.js';
 import { getIsGlb, getContainingFolder } from '../gltf/utils.js';
 import { GlbParser } from './glb_parser.js';
@@ -9,6 +7,7 @@ import { gltfTexture, gltfTextureInfo } from '../gltf/texture.js';
 import { gltfSampler } from '../gltf/sampler.js';
 import { GL } from '../Renderer/webgl.js';
 import { iblSampler } from '../ibl_sampler.js';
+import init from '../libs/mikktspace.js';
 
 
 import { AsyncFileReader } from './async_file_reader.js';
@@ -30,10 +29,12 @@ class ResourceLoader
      * You cannot share resource loaders between GltfViews as some of the resources
      * are allocated directly on the WebGl2 Context
      * @param {Object} view the GltfView for which the resources are loaded
+     * @param {String} libPath path to the lib folder. This can be used to find the WASM files if sample viewer is repackaged
      */
-    constructor(view)
+    constructor(view, libPath = "./libs/")
     {
         this.view = view;
+        this.libPath = libPath;
     }
 
     /**
@@ -51,10 +52,18 @@ class ResourceLoader
         let filename = "";
         if (typeof gltfFile === "string")
         {
-            isGlb = getIsGlb(gltfFile);
-            let response = await axios.get(gltfFile, { responseType: isGlb ? "arraybuffer" : "json" });
-            json = response.data;
-            data = response.data;
+            const response = await fetch(gltfFile);
+            const responseData = await response.arrayBuffer();
+            const uintData = new Uint8Array(responseData);
+            const fileMagicNumbers = new TextDecoder().decode(uintData.subarray(0, 5));
+
+            isGlb = fileMagicNumbers.startsWith("glTF");
+            if(isGlb) {
+                json = data = responseData;
+            } else {
+                json = data = JSON.parse(new TextDecoder().decode(uintData));
+            }
+
             filename = gltfFile;
         }
         else if (gltfFile instanceof ArrayBuffer)
@@ -69,10 +78,10 @@ class ResourceLoader
                 console.error("Only .glb files can be loaded from an array buffer");
             }
         }
-        else if (typeof (File) !== 'undefined' && gltfFile instanceof File)
+        else if (Array.isArray(gltfFile) && typeof(File) !== 'undefined' && gltfFile[1] instanceof File)
         {
-            let fileContent = gltfFile;
-            filename = gltfFile.name;
+            let fileContent = gltfFile[1];
+            filename = gltfFile[1].name;
             isGlb = getIsGlb(filename);
             if (isGlb)
             {
@@ -86,8 +95,12 @@ class ResourceLoader
             }
         }
         else
-        {
-            console.error("Passed invalid type to loadGltf " + typeof (gltfFile));
+        {   
+            // Load empty glTF
+            data = "{\"asset\":{\"version\": \"2.0\"}}";
+            filename = "empty";
+            isGlb = false;
+            json = JSON.parse(data);
         }
 
         if (isGlb)
@@ -109,7 +122,7 @@ class ResourceLoader
         {
             image.resolveRelativePath(getContainingFolder(gltf.path));
         }
-
+        await init(`${this.libPath}mikktspace_bg.wasm`);
         await gltfLoader.load(gltf, this.view.context, buffers);
 
         return gltf;
@@ -126,9 +139,8 @@ class ResourceLoader
         let image = undefined;
         if (typeof environmentFile === "string")
         {
-            let response = await axios.get(environmentFile, { responseType: "arraybuffer" });
-
-            image = await loadHDR(new Uint8Array(response.data));
+            let response = await fetch(environmentFile);
+            image = await loadHDR(new Uint8Array(await response.arrayBuffer()));
         }
         else if (environmentFile instanceof ArrayBuffer)
         {
@@ -331,12 +343,12 @@ async function _loadEnvironmentFromPanorama(imageHDR, view, luts)
     }
 
     environment.images.push(new gltfImage(
-        undefined, 
-        GL.TEXTURE_2D, 
-        0, 
-        undefined, 
-        undefined, 
-        ImageMimeType.GLTEXTURE, 
+        undefined,
+        GL.TEXTURE_2D,
+        0,
+        undefined,
+        undefined,
+        ImageMimeType.GLTEXTURE,
         environmentFiltering.ggxLutTextureID));
     const lutTexture = new gltfTexture(lutSamplerIdx, [imageIdx++], GL.TEXTURE_2D);
     lutTexture.initialized = true; // iblsampler has already initialized the texture
@@ -348,12 +360,12 @@ async function _loadEnvironmentFromPanorama(imageHDR, view, luts)
     // Sheen
     // Charlie
     environment.images.push(new gltfImage(
-        undefined, 
-        GL.TEXTURE_2D, 
-        0, 
-        undefined, 
-        undefined, 
-        ImageMimeType.GLTEXTURE, 
+        undefined,
+        GL.TEXTURE_2D,
+        0,
+        undefined,
+        undefined,
+        ImageMimeType.GLTEXTURE,
         environmentFiltering.charlieLutTextureID));
     const charlieLut = new gltfTexture(lutSamplerIdx, [imageIdx++], GL.TEXTURE_2D);
     charlieLut.initialized = true; // iblsampler has already initialized the texture
@@ -366,10 +378,10 @@ async function _loadEnvironmentFromPanorama(imageHDR, view, luts)
 
     environment.images.push(new gltfImage(luts.lut_sheen_E_file, GL.TEXTURE_2D, 0, undefined, undefined, ImageMimeType.PNG));
     const sheenELut = new gltfTexture(lutSamplerIdx, [imageIdx++], GL.TEXTURE_2D);
-    sheenELut.initialized = true; // iblsampler has already initialized the texture
+    sheenELut.initialized = false; // iblsampler does not create this texture
     environment.textures.push(sheenELut);
 
-    environment.sheenELUT = new gltfTextureInfo(environment.textures.length - 1);
+    environment.sheenELUT = new gltfTextureInfo(environment.textures.length - 1, 0, true);
     environment.sheenELUT.generateMips = false;
 
     await gltfLoader.loadImages(environment);
@@ -377,6 +389,7 @@ async function _loadEnvironmentFromPanorama(imageHDR, view, luts)
     environment.initGl(view.context);
 
     environment.mipCount = environmentFiltering.mipmapLevels;
+    environment.iblIntensityScale = environmentFiltering.scaleValue;
 
     return environment;
 }

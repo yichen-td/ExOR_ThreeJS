@@ -1,5 +1,5 @@
-import { mat4, quat } from 'gl-matrix';
-import { jsToGl } from './utils.js';
+import { mat4, quat, vec3 } from 'gl-matrix';
+import { jsToGl, jsToGlSlice } from './utils.js';
 import { GltfObject } from './gltf_object.js';
 
 // contain:
@@ -8,6 +8,12 @@ import { GltfObject } from './gltf_object.js';
 
 class gltfNode extends GltfObject
 {
+    static animatedProperties = [
+        "rotation",
+        "scale",
+        "translation",
+        "weights"
+    ];
     constructor()
     {
         super();
@@ -20,43 +26,67 @@ class gltfNode extends GltfObject
         this.name = undefined;
         this.mesh = undefined;
         this.skin = undefined;
+        this.weights = undefined;
 
         // non gltf
         this.worldTransform = mat4.create();
         this.inverseWorldTransform = mat4.create();
         this.normalMatrix = mat4.create();
         this.light = undefined;
-        this.changed = true;
-
-        this.animationRotation = undefined;
-        this.animationTranslation = undefined;
-        this.animationScale = undefined;
+        this.instanceMatrices = undefined;
+        this.instanceWorldTransforms = undefined;
     }
 
-    initGl()
+    initGl(gltf, webGlContext)
     {
-        if (this.matrix !== undefined)
-        {
-            this.applyMatrix(this.matrix);
+        if (this.extensions?.EXT_mesh_gpu_instancing?.attributes !== undefined) {
+            const firstAccessor = Object.values(this.extensions?.EXT_mesh_gpu_instancing?.attributes)[0];
+            const count = gltf.accessors[firstAccessor].count;
+            const translationAccessor = this.extensions?.EXT_mesh_gpu_instancing?.attributes?.TRANSLATION;
+            let translationData = undefined;
+            if (translationAccessor !== undefined) {
+                translationData = gltf.accessors[translationAccessor].getDeinterlacedView(gltf);
+            }
+            const rotationAccessor = this.extensions?.EXT_mesh_gpu_instancing?.attributes?.ROTATION;
+            let rotationData = undefined;
+            if (rotationAccessor !== undefined) {
+                rotationData = gltf.accessors[rotationAccessor].getDeinterlacedView(gltf);
+            }
+            const scaleAccessor = this.extensions?.EXT_mesh_gpu_instancing?.attributes?.SCALE;
+            let scaleData = undefined;
+            if (scaleAccessor !== undefined) {
+                scaleData = gltf.accessors[scaleAccessor].getDeinterlacedView(gltf);
+            }
+            this.instanceMatrices = [];
+            for (let i = 0; i < count; i++) {
+                const translation = translationData ? jsToGlSlice(translationData, i * 3, 3) : vec3.create();
+                const rotation = rotationData ? jsToGlSlice(rotationData, i * 4, 4) : quat.create();
+                const scale = scaleData ? jsToGlSlice(scaleData, i * 3, 3) : vec3.fromValues(1, 1, 1);
+                this.instanceMatrices.push(mat4.fromRotationTranslationScale(
+                    mat4.create(),
+                    rotation,
+                    translation,
+                    scale
+                ));
+            }
         }
-        else
-        {
-            if (this.scale !== undefined)
-            {
-                this.scale = jsToGl(this.scale);
-            }
+    }
 
-            if (this.rotation !== undefined)
-            {
-                this.rotation = jsToGl(this.rotation);
-            }
-
-            if (this.translation !== undefined)
-            {
-                this.translation = jsToGl(this.translation);
-            }
+    fromJson(jsonNode) {
+        super.fromJson(jsonNode);
+        if (jsonNode.matrix !== undefined) {
+            this.applyMatrix(jsonNode.matrix);
         }
-        this.changed = true;
+    }
+
+    getWeights(gltf)
+    {
+        if (this.weights !== undefined && this.weights.length > 0) {
+            return this.weights;
+        }
+        else {
+            return gltf.meshes[this.mesh].weights;
+        }
     }
 
     applyMatrix(matrixData)
@@ -77,57 +107,16 @@ class gltfNode extends GltfObject
         quat.normalize(this.rotation, this.rotation);
 
         mat4.getTranslation(this.translation, this.matrix);
-
-        this.changed = true;
-    }
-
-    // vec3
-    applyTranslationAnimation(translation)
-    {
-        this.animationTranslation = translation;
-        this.changed = true;
-    }
-
-    // quat
-    applyRotationAnimation(rotation)
-    {
-        this.animationRotation = rotation;
-        this.changed = true;
-    }
-
-    // vec3
-    applyScaleAnimation(scale)
-    {
-        this.animationScale = scale;
-        this.changed = true;
-    }
-
-    resetTransform()
-    {
-        this.rotation = jsToGl([0, 0, 0, 1]);
-        this.scale = jsToGl([1, 1, 1]);
-        this.translation = jsToGl([0, 0, 0]);
-        this.changed = true;
     }
 
     getLocalTransform()
     {
-        if(this.transform === undefined || this.changed)
-        {
-            // if no animation is applied and the transform matrix is present use it directly
-            if(this.animationTranslation === undefined && this.animationRotation === undefined && this.animationScale === undefined && this.matrix !== undefined) {
-                this.transform = mat4.clone(this.matrix);
-            } else {
-                this.transform = mat4.create();
-                const translation = this.animationTranslation !== undefined ? this.animationTranslation : this.translation;
-                const rotation = this.animationRotation !== undefined ? this.animationRotation : this.rotation;
-                const scale = this.animationScale !== undefined ? this.animationScale : this.scale;
-                mat4.fromRotationTranslationScale(this.transform, rotation, translation, scale);
-            }
-            this.changed = false;
-        }
-
-        return mat4.clone(this.transform);
+        return mat4.fromRotationTranslationScale(
+            mat4.create(),
+            this.rotation,
+            this.translation,
+            this.scale
+        );
     }
 }
 

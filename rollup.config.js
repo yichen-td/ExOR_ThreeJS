@@ -2,10 +2,13 @@ import commonjs from '@rollup/plugin-commonjs';
 import glslify from 'rollup-plugin-glslify';
 import resolve from '@rollup/plugin-node-resolve';
 import copy from "rollup-plugin-copy";
+import {wasm} from "@rollup/plugin-wasm";
+import license from "rollup-plugin-license";
 
 
 export default {
-    input: ['source/gltf-sample-viewer.js'],
+    strictDeprecations: true,
+    input: ['source/gltf-sample-renderer.js'],
     output: [
         {
             file: 'dist/gltf-viewer.js',
@@ -19,11 +22,12 @@ export default {
         }
     ],
     plugins: [
+        wasm( {fileName: "libs/[name][extname]", publicPath: "./"} ),
         glslify(),
         resolve({
             browser: true,
             preferBuiltins: false,
-            dedupe: ['gl-matrix', 'axios', 'jpeg-js', 'fast-png']
+            dedupe: ['gl-matrix', 'jpeg-js', 'fast-png']
         }),
         copy({
             targets: [
@@ -38,5 +42,15 @@ export default {
             ]
         }),
         commonjs(),
+        license({
+            banner: {
+                content: {
+                    file: 'LICENSE_BANNER.txt',
+                }
+            },
+            thirdParty:{
+                includeSelf: false
+            }
+        }),
     ]
 };

@@ -6,6 +6,7 @@ import { GL } from "../Renderer/webgl";
 
 class ImageBasedLight extends GltfObject
 {
+    static animatedProperties = [];
     constructor()
     {
         super();
@@ -38,7 +39,7 @@ class ImageBasedLight extends GltfObject
         }
     }
 
-    initGl(gltf, webGlContext)
+    initGl(gltf)
     {
         if (this.diffuseEnvironmentTexture !== undefined)
         {

@@ -1,8 +1,11 @@
+/* globals WebGl */
+
 import { GL } from '../Renderer/webgl.js';
 import { GltfObject } from './gltf_object.js';
 
 class gltfAccessor extends GltfObject
 {
+    static animatedProperties = [];
     constructor()
     {
         super();
@@ -131,14 +134,14 @@ class gltfAccessor extends GltfObject
         {
             const bufferView = gltf.bufferViews[this.bufferView];
             const buffer = gltf.buffers[bufferView.buffer];
-            const byteOffset = this.byteOffset + bufferView.byteOffset;
 
-            const componentSize = this.getComponentSize(this.componentType);
-            const componentCount = this.getComponentCount(this.type);
+            const componentSize = this.getComponentSize(this.componentType); // E.g. GL.FLOAT -> 4
+            const componentCount = this.getComponentCount(this.type); // E.g. Vec3 -> 3
             const arrayLength = this.count * componentCount;
 
             let stride = bufferView.byteStride !== 0 ? bufferView.byteStride : componentCount * componentSize;
-            let dv = new DataView(buffer.buffer, byteOffset, this.count * stride);
+
+            let bufferViewData = new DataView(buffer.buffer, bufferView.byteOffset, bufferView.byteLength);
 
             let func = 'getFloat32';
             switch (this.componentType)
@@ -171,9 +174,12 @@ class gltfAccessor extends GltfObject
 
             for(let i = 0; i < arrayLength; ++i)
             {
-                let offset = Math.floor(i/componentCount) * stride + (i % componentCount) * componentSize;
-                this.filteredView[i] = dv[func](offset, true);
+                const vertexIndex = Math.floor(i/componentCount);
+                const componentIndex = (i % componentCount) * componentSize;
+                const offset = vertexIndex * stride + componentIndex + this.byteOffset; // Add Accessor byte offset
+                this.filteredView[i] = bufferViewData[func](offset, true);
             }
+              
         }
         else
         {
@@ -228,7 +234,7 @@ class gltfAccessor extends GltfObject
 
         const indicesBufferView = gltf.bufferViews[this.sparse.indices.bufferView];
         const indicesBuffer = gltf.buffers[indicesBufferView.buffer];
-        const indicesByteOffset = this.sparse.indices.byteOffset ?? 0 + indicesBufferView.byteOffset ?? 0;
+        const indicesByteOffset = (this.sparse.indices.byteOffset ?? 0) + (indicesBufferView.byteOffset ?? 0);
 
         const indicesComponentSize = this.getComponentSize(this.sparse.indices.componentType);
         let indicesComponentCount = 1;
@@ -258,7 +264,7 @@ class gltfAccessor extends GltfObject
 
         const valuesBufferView = gltf.bufferViews[this.sparse.values.bufferView];
         const valuesBuffer = gltf.buffers[valuesBufferView.buffer];
-        const valuesByteOffset = this.sparse.values.byteOffset ?? 0 + valuesBufferView.byteOffset ?? 0;
+        const valuesByteOffset = (this.sparse.values.byteOffset ?? 0) + (valuesBufferView.byteOffset ?? 0);
 
         const valuesComponentSize = this.getComponentSize(this.componentType);
         let valuesComponentCount = this.getComponentCount(this.type);
@@ -305,6 +311,7 @@ class gltfAccessor extends GltfObject
     }
 
     // dequantize can be used to perform the normalization from WebGL2 vertexAttribPointer explicitly
+    // https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Khronos/KHR_mesh_quantization/README.md#encoding-quantized-data
     static dequantize(typedArray, componentType)
     {
         switch (componentType)

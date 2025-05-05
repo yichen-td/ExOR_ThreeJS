@@ -18,8 +18,34 @@ import { gltfAnimation } from './animation.js';
 import { gltfSkin } from './skin.js';
 import { gltfVariant } from './variant.js';
 
+const allowedExtensions = [
+    "KHR_animation_pointer",
+    "KHR_draco_mesh_compression",
+    "KHR_lights_image_based",
+    "KHR_lights_punctual",
+    "KHR_materials_anisotropy",
+    "KHR_materials_clearcoat",
+    "KHR_materials_dispersion",
+    "KHR_materials_emissive_strength",
+    "KHR_materials_ior",
+    "KHR_materials_iridescence",
+    "KHR_materials_pbrSpecularGlossiness",
+    "KHR_materials_sheen",
+    "KHR_materials_specular",
+    "KHR_materials_transmission",
+    "KHR_materials_unlit",
+    "KHR_materials_variants",
+    "KHR_materials_volume",
+    "KHR_mesh_quantization",
+    "KHR_texture_basisu",
+    "KHR_texture_transform",
+    "KHR_xmp_json_ld",
+    "EXT_texture_webp",
+];
+
 class glTF extends GltfObject
 {
+    static animatedProperties = [];
     constructor(file)
     {
         super();
@@ -51,6 +77,12 @@ class glTF extends GltfObject
     fromJson(json)
     {
         super.fromJson(json);
+
+        for (const extensionName of json.extensionsRequired ?? []) {
+            if (!allowedExtensions.includes(extensionName)) {
+                throw new Error("Unsupported extension: " + extensionName);
+            }
+        }
 
         this.asset = objectFromJson(json.asset, gltfAsset);
         this.cameras = objectsFromJsons(json.cameras, gltfCamera);
@@ -104,13 +136,40 @@ class glTF extends GltfObject
                 }
 
                 let isDisjoint = true;
-
                 for (const iChannel of this.animations[i].channels)
                 {
+                    const getAnimationProperty = function (channel, nodes){ 
+                     
+                        let property = null;
+                        switch(channel.target.path)
+                        {
+                        case "translation":
+                            property = `/nodes/${channel.target.node}/translation`;
+                            break;
+                        case "rotation":
+                            property = `/nodes/${channel.target.node}/rotation`;
+                            break;
+                        case "scale":
+                            property = `/nodes/${channel.target.node}/scale`;
+                            break;
+                        case "weights":
+                            if (nodes[channel.target.node].weights !== undefined) {
+                                property = `/nodes/${channel.target.node}/weights`;
+                            } else {
+                                property = `/meshes/${nodes[channel.target.node].mesh}/weights`;
+                            }
+                            break;
+                        case "pointer":
+                            property = channel.target.extensions.KHR_animation_pointer.pointer;
+                            break;
+                        }
+                        return property;
+                    };
+                    const iProperty = getAnimationProperty(iChannel, this.nodes);
                     for (const kChannel of this.animations[k].channels)
                     {
-                        if (iChannel.target.node === kChannel.target.node
-                            && iChannel.target.path === kChannel.target.path)
+                        const kProperty = getAnimationProperty(kChannel, this.nodes);
+                        if (iProperty === kProperty)
                         {
                             isDisjoint = false;
                             break;

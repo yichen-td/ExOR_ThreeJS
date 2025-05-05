@@ -46,7 +46,8 @@ float getSpotAttenuation(vec3 pointToLight, vec3 spotDirection, float outerConeC
     {
         if (actualCos < innerConeCos)
         {
-            return smoothstep(outerConeCos, innerConeCos, actualCos);
+            float angularAttenuation = (actualCos - outerConeCos) / (innerConeCos - outerConeCos);
+            return angularAttenuation * angularAttenuation;
         }
         return 1.0;
     }
@@ -73,7 +74,7 @@ vec3 getLighIntensity(Light light, vec3 pointToLight)
 
 
 vec3 getPunctualRadianceTransmission(vec3 normal, vec3 view, vec3 pointToLight, float alphaRoughness,
-    vec3 f0, vec3 f90, vec3 baseColor, float ior)
+    vec3 baseColor, float ior)
 {
     float transmissionRougness = applyIorToRoughness(alphaRoughness, ior);
 
@@ -84,11 +85,10 @@ vec3 getPunctualRadianceTransmission(vec3 normal, vec3 view, vec3 pointToLight, 
     vec3 h = normalize(l_mirror + v);            // Halfway vector between transmission light vector and v
 
     float D = D_GGX(clamp(dot(n, h), 0.0, 1.0), transmissionRougness);
-    vec3 F = F_Schlick(f0, f90, clamp(dot(v, h), 0.0, 1.0));
     float Vis = V_GGX(clamp(dot(n, l_mirror), 0.0, 1.0), clamp(dot(n, v), 0.0, 1.0), transmissionRougness);
 
     // Transmission BTDF
-    return (1.0 - F) * baseColor * D * Vis;
+    return baseColor * D * Vis;
 }
 
 
@@ -97,7 +97,7 @@ vec3 getPunctualRadianceClearCoat(vec3 clearcoatNormal, vec3 v, vec3 l, vec3 h, 
     float NdotL = clampedDot(clearcoatNormal, l);
     float NdotV = clampedDot(clearcoatNormal, v);
     float NdotH = clampedDot(clearcoatNormal, h);
-    return NdotL * BRDF_specularGGX(f0, f90, clearcoatRoughness * clearcoatRoughness, 1.0, VdotH, NdotL, NdotV, NdotH);
+    return NdotL * BRDF_specularGGX(clearcoatRoughness * clearcoatRoughness, NdotL, NdotV, NdotH);
 }
 
 
@@ -118,8 +118,7 @@ vec3 applyVolumeAttenuation(vec3 radiance, float transmissionDistance, vec3 atte
     else
     {
         // Compute light attenuation using Beer's law.
-        vec3 attenuationCoefficient = -log(attenuationColor) / attenuationDistance;
-        vec3 transmittance = exp(-attenuationCoefficient * transmissionDistance); // Beer's law
+        vec3 transmittance = pow(attenuationColor, vec3(transmissionDistance / attenuationDistance));
         return transmittance * radiance;
     }
 }

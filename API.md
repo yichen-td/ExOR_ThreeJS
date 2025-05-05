@@ -25,7 +25,7 @@ GltfView represents a view on a gltf, e.g. in a canvas
 * [GltfView](#GltfView)
     * [new GltfView(context)](#new_GltfView_new)
     * [.createState()](#GltfView+createState) ⇒ [<code>GltfState</code>](#GltfState)
-    * [.createResourceLoader([externalDracoLib], [externalKtxLib])](#GltfView+createResourceLoader) ⇒ [<code>ResourceLoader</code>](#ResourceLoader)
+    * [.createResourceLoader([externalDracoLib], [externalKtxLib], [libPath])](#GltfView+createResourceLoader) ⇒ [<code>ResourceLoader</code>](#ResourceLoader)
     * [.renderFrame(state, width, height)](#GltfView+renderFrame)
     * [.gatherStatistics(state)](#GltfView+gatherStatistics) ⇒ <code>Object</code>
 
@@ -54,7 +54,7 @@ GltfViews.
 **Returns**: [<code>GltfState</code>](#GltfState) - GltfState  
 <a name="GltfView+createResourceLoader"></a>
 
-### gltfView.createResourceLoader([externalDracoLib], [externalKtxLib]) ⇒ [<code>ResourceLoader</code>](#ResourceLoader)
+### gltfView.createResourceLoader([externalDracoLib], [externalKtxLib], [libPath]) ⇒ [<code>ResourceLoader</code>](#ResourceLoader)
 createResourceLoader creates a resource loader with which glTFs and
 environments can be loaded for the view
 
@@ -65,6 +65,7 @@ environments can be loaded for the view
 | --- | --- | --- |
 | [externalDracoLib] | <code>Object</code> | optional object of an external Draco library, e.g. from a CDN |
 | [externalKtxLib] | <code>Object</code> | optional object of an external KTX library, e.g. from a CDN |
+| [libPath] | <code>string</code> | optional path to the libraries. Used to define the path to the WASM files on repackaging |
 
 <a name="GltfView+renderFrame"></a>
 
@@ -128,10 +129,11 @@ GltfState containing a state for visualization in GltfView
             * [.internalMSAA](#GltfState+renderingParameters.internalMSAA)
     * _static_
         * [.ToneMaps](#GltfState.ToneMaps)
-            * [.NONE](#GltfState.ToneMaps.NONE)
+            * [.KHR_PBR_NEUTRAL](#GltfState.ToneMaps.KHR_PBR_NEUTRAL)
             * [.ACES_HILL_EXPOSURE_BOOST](#GltfState.ToneMaps.ACES_HILL_EXPOSURE_BOOST)
             * [.ACES_NARKOWICZ](#GltfState.ToneMaps.ACES_NARKOWICZ)
             * [.ACES_HILL](#GltfState.ToneMaps.ACES_HILL)
+            * [.NONE](#GltfState.ToneMaps.NONE)
         * [.DebugOutput](#GltfState.DebugOutput)
             * [.NONE](#GltfState.DebugOutput.NONE)
             * [.generic](#GltfState.DebugOutput.generic)
@@ -146,31 +148,31 @@ GltfState containing a state for visualization in GltfView
                 * [.OCCLUSION](#GltfState.DebugOutput.generic.OCCLUSION)
                 * [.EMISSIVE](#GltfState.DebugOutput.generic.EMISSIVE)
             * [.mr](#GltfState.DebugOutput.mr)
-                * [.METALLIC_ROUGHNESS](#GltfState.DebugOutput.mr.METALLIC_ROUGHNESS)
                 * [.BASECOLOR](#GltfState.DebugOutput.mr.BASECOLOR)
                 * [.METALLIC](#GltfState.DebugOutput.mr.METALLIC)
                 * [.ROUGHNESS](#GltfState.DebugOutput.mr.ROUGHNESS)
             * [.clearcoat](#GltfState.DebugOutput.clearcoat)
-                * [.CLEARCOAT](#GltfState.DebugOutput.clearcoat.CLEARCOAT)
                 * [.CLEARCOAT_FACTOR](#GltfState.DebugOutput.clearcoat.CLEARCOAT_FACTOR)
                 * [.CLEARCOAT_ROUGHNESS](#GltfState.DebugOutput.clearcoat.CLEARCOAT_ROUGHNESS)
                 * [.CLEARCOAT_NORMAL](#GltfState.DebugOutput.clearcoat.CLEARCOAT_NORMAL)
             * [.sheen](#GltfState.DebugOutput.sheen)
-                * [.SHEEN](#GltfState.DebugOutput.sheen.SHEEN)
                 * [.SHEEN_COLOR](#GltfState.DebugOutput.sheen.SHEEN_COLOR)
                 * [.SHEEN_ROUGHNESS](#GltfState.DebugOutput.sheen.SHEEN_ROUGHNESS)
             * [.specular](#GltfState.DebugOutput.specular)
-                * [.SPECULAR](#GltfState.DebugOutput.specular.SPECULAR)
                 * [.SPECULAR_FACTOR](#GltfState.DebugOutput.specular.SPECULAR_FACTOR)
                 * [.SPECULAR_COLOR](#GltfState.DebugOutput.specular.SPECULAR_COLOR)
             * [.transmission](#GltfState.DebugOutput.transmission)
-                * [.TRANSMISSION_VOLUME](#GltfState.DebugOutput.transmission.TRANSMISSION_VOLUME)
                 * [.TRANSMISSION_FACTOR](#GltfState.DebugOutput.transmission.TRANSMISSION_FACTOR)
                 * [.VOLUME_THICKNESS](#GltfState.DebugOutput.transmission.VOLUME_THICKNESS)
+            * [.diffuseTransmission](#GltfState.DebugOutput.diffuseTransmission)
+                * [.DIFFUSE_TRANSMISSION_FACTOR](#GltfState.DebugOutput.diffuseTransmission.DIFFUSE_TRANSMISSION_FACTOR)
+                * [.DIFFUSE_TRANSMISSION_COLOR_FACTOR](#GltfState.DebugOutput.diffuseTransmission.DIFFUSE_TRANSMISSION_COLOR_FACTOR)
             * [.iridescence](#GltfState.DebugOutput.iridescence)
-                * [.IRIDESCENCE](#GltfState.DebugOutput.iridescence.IRIDESCENCE)
                 * [.IRIDESCENCE_FACTOR](#GltfState.DebugOutput.iridescence.IRIDESCENCE_FACTOR)
                 * [.IRIDESCENCE_THICKNESS](#GltfState.DebugOutput.iridescence.IRIDESCENCE_THICKNESS)
+            * [.anisotropy](#GltfState.DebugOutput.anisotropy)
+                * [.ANISOTROPIC_STRENGTH](#GltfState.DebugOutput.anisotropy.ANISOTROPIC_STRENGTH)
+                * [.ANISOTROPIC_DIRECTION](#GltfState.DebugOutput.anisotropy.ANISOTROPIC_DIRECTION)
 
 <a name="new_GltfState_new"></a>
 
@@ -312,7 +314,7 @@ apply blur to the background environment map
 <a name="GltfState+renderingParameters.toneMap"></a>
 
 #### renderingParameters.toneMap
-which tonemap to use, use ACES for a filmic effect
+which tonemap to use, use KHR_PBR_NEUTRAL for best color reproduction
 
 **Kind**: static property of [<code>renderingParameters</code>](#GltfState+renderingParameters)  
 <a name="GltfState+renderingParameters.debugOutput"></a>
@@ -326,9 +328,9 @@ render some debug output channes, such as for example the normals
 #### renderingParameters.environmentRotation
 By default the front face of the environment is +Z (90)
 Front faces:
-+X = 0 
-+Z = 90 
--X = 180 
++X = 0
++Z = 90
+-X = 180
 -Z = 270
 
 **Kind**: static property of [<code>renderingParameters</code>](#GltfState+renderingParameters)  
@@ -347,21 +349,22 @@ MSAA used for cases which are not handled by the browser (e.g. Transmission)
 <a name="GltfState.ToneMaps"></a>
 
 ### GltfState.ToneMaps
-ToneMaps enum for the different tonemappings that are supported 
+ToneMaps enum for the different tonemappings that are supported
 by gltf sample viewer
 
 **Kind**: static property of [<code>GltfState</code>](#GltfState)  
 
 * [.ToneMaps](#GltfState.ToneMaps)
-    * [.NONE](#GltfState.ToneMaps.NONE)
+    * [.KHR_PBR_NEUTRAL](#GltfState.ToneMaps.KHR_PBR_NEUTRAL)
     * [.ACES_HILL_EXPOSURE_BOOST](#GltfState.ToneMaps.ACES_HILL_EXPOSURE_BOOST)
     * [.ACES_NARKOWICZ](#GltfState.ToneMaps.ACES_NARKOWICZ)
     * [.ACES_HILL](#GltfState.ToneMaps.ACES_HILL)
+    * [.NONE](#GltfState.ToneMaps.NONE)
 
-<a name="GltfState.ToneMaps.NONE"></a>
+<a name="GltfState.ToneMaps.KHR_PBR_NEUTRAL"></a>
 
-#### ToneMaps.NONE
-don't apply tone mapping
+#### ToneMaps.KHR\_PBR\_NEUTRAL
+Khronos PBR neutral tone mapping, see https://github.com/KhronosGroup/ToneMapping, https://modelviewer.dev/examples/tone-mapping
 
 **Kind**: static property of [<code>ToneMaps</code>](#GltfState.ToneMaps)  
 <a name="GltfState.ToneMaps.ACES_HILL_EXPOSURE_BOOST"></a>
@@ -380,6 +383,12 @@ fast implementation of the ACES sRGB RRT+ODT based on Krzysztof Narkowicz' imple
 
 #### ToneMaps.ACES\_HILL
 more accurate implementation of the ACES sRGB RRT+ODT based on Stephen Hill's implementation
+
+**Kind**: static property of [<code>ToneMaps</code>](#GltfState.ToneMaps)  
+<a name="GltfState.ToneMaps.NONE"></a>
+
+#### ToneMaps.NONE
+Linear mapping, clamped at 1.0 per channel
 
 **Kind**: static property of [<code>ToneMaps</code>](#GltfState.ToneMaps)  
 <a name="GltfState.DebugOutput"></a>
@@ -404,31 +413,31 @@ such as "NORMAL"
         * [.OCCLUSION](#GltfState.DebugOutput.generic.OCCLUSION)
         * [.EMISSIVE](#GltfState.DebugOutput.generic.EMISSIVE)
     * [.mr](#GltfState.DebugOutput.mr)
-        * [.METALLIC_ROUGHNESS](#GltfState.DebugOutput.mr.METALLIC_ROUGHNESS)
         * [.BASECOLOR](#GltfState.DebugOutput.mr.BASECOLOR)
         * [.METALLIC](#GltfState.DebugOutput.mr.METALLIC)
         * [.ROUGHNESS](#GltfState.DebugOutput.mr.ROUGHNESS)
     * [.clearcoat](#GltfState.DebugOutput.clearcoat)
-        * [.CLEARCOAT](#GltfState.DebugOutput.clearcoat.CLEARCOAT)
         * [.CLEARCOAT_FACTOR](#GltfState.DebugOutput.clearcoat.CLEARCOAT_FACTOR)
         * [.CLEARCOAT_ROUGHNESS](#GltfState.DebugOutput.clearcoat.CLEARCOAT_ROUGHNESS)
         * [.CLEARCOAT_NORMAL](#GltfState.DebugOutput.clearcoat.CLEARCOAT_NORMAL)
     * [.sheen](#GltfState.DebugOutput.sheen)
-        * [.SHEEN](#GltfState.DebugOutput.sheen.SHEEN)
         * [.SHEEN_COLOR](#GltfState.DebugOutput.sheen.SHEEN_COLOR)
         * [.SHEEN_ROUGHNESS](#GltfState.DebugOutput.sheen.SHEEN_ROUGHNESS)
     * [.specular](#GltfState.DebugOutput.specular)
-        * [.SPECULAR](#GltfState.DebugOutput.specular.SPECULAR)
         * [.SPECULAR_FACTOR](#GltfState.DebugOutput.specular.SPECULAR_FACTOR)
         * [.SPECULAR_COLOR](#GltfState.DebugOutput.specular.SPECULAR_COLOR)
     * [.transmission](#GltfState.DebugOutput.transmission)
-        * [.TRANSMISSION_VOLUME](#GltfState.DebugOutput.transmission.TRANSMISSION_VOLUME)
         * [.TRANSMISSION_FACTOR](#GltfState.DebugOutput.transmission.TRANSMISSION_FACTOR)
         * [.VOLUME_THICKNESS](#GltfState.DebugOutput.transmission.VOLUME_THICKNESS)
+    * [.diffuseTransmission](#GltfState.DebugOutput.diffuseTransmission)
+        * [.DIFFUSE_TRANSMISSION_FACTOR](#GltfState.DebugOutput.diffuseTransmission.DIFFUSE_TRANSMISSION_FACTOR)
+        * [.DIFFUSE_TRANSMISSION_COLOR_FACTOR](#GltfState.DebugOutput.diffuseTransmission.DIFFUSE_TRANSMISSION_COLOR_FACTOR)
     * [.iridescence](#GltfState.DebugOutput.iridescence)
-        * [.IRIDESCENCE](#GltfState.DebugOutput.iridescence.IRIDESCENCE)
         * [.IRIDESCENCE_FACTOR](#GltfState.DebugOutput.iridescence.IRIDESCENCE_FACTOR)
         * [.IRIDESCENCE_THICKNESS](#GltfState.DebugOutput.iridescence.IRIDESCENCE_THICKNESS)
+    * [.anisotropy](#GltfState.DebugOutput.anisotropy)
+        * [.ANISOTROPIC_STRENGTH](#GltfState.DebugOutput.anisotropy.ANISOTROPIC_STRENGTH)
+        * [.ANISOTROPIC_DIRECTION](#GltfState.DebugOutput.anisotropy.ANISOTROPIC_DIRECTION)
 
 <a name="GltfState.DebugOutput.NONE"></a>
 
@@ -518,22 +527,15 @@ output the emissive value
 <a name="GltfState.DebugOutput.mr"></a>
 
 #### DebugOutput.mr
-output metallic roughness
+metallic roughness
 
 **Kind**: static property of [<code>DebugOutput</code>](#GltfState.DebugOutput)  
 
 * [.mr](#GltfState.DebugOutput.mr)
-    * [.METALLIC_ROUGHNESS](#GltfState.DebugOutput.mr.METALLIC_ROUGHNESS)
     * [.BASECOLOR](#GltfState.DebugOutput.mr.BASECOLOR)
     * [.METALLIC](#GltfState.DebugOutput.mr.METALLIC)
     * [.ROUGHNESS](#GltfState.DebugOutput.mr.ROUGHNESS)
 
-<a name="GltfState.DebugOutput.mr.METALLIC_ROUGHNESS"></a>
-
-##### mr.METALLIC\_ROUGHNESS
-output the combined metallic roughness
-
-**Kind**: static property of [<code>mr</code>](#GltfState.DebugOutput.mr)  
 <a name="GltfState.DebugOutput.mr.BASECOLOR"></a>
 
 ##### mr.BASECOLOR
@@ -555,26 +557,19 @@ output the roughness value from pbr metallic roughness
 <a name="GltfState.DebugOutput.clearcoat"></a>
 
 #### DebugOutput.clearcoat
-output clearcoat lighting
+KHR_materials_clearcoat
 
 **Kind**: static property of [<code>DebugOutput</code>](#GltfState.DebugOutput)  
 
 * [.clearcoat](#GltfState.DebugOutput.clearcoat)
-    * [.CLEARCOAT](#GltfState.DebugOutput.clearcoat.CLEARCOAT)
     * [.CLEARCOAT_FACTOR](#GltfState.DebugOutput.clearcoat.CLEARCOAT_FACTOR)
     * [.CLEARCOAT_ROUGHNESS](#GltfState.DebugOutput.clearcoat.CLEARCOAT_ROUGHNESS)
     * [.CLEARCOAT_NORMAL](#GltfState.DebugOutput.clearcoat.CLEARCOAT_NORMAL)
 
-<a name="GltfState.DebugOutput.clearcoat.CLEARCOAT"></a>
-
-##### clearcoat.CLEARCOAT
-output the combined clear coat
-
-**Kind**: static property of [<code>clearcoat</code>](#GltfState.DebugOutput.clearcoat)  
 <a name="GltfState.DebugOutput.clearcoat.CLEARCOAT_FACTOR"></a>
 
 ##### clearcoat.CLEARCOAT\_FACTOR
-output the clear coat factor
+output the clear coat strength
 
 **Kind**: static property of [<code>clearcoat</code>](#GltfState.DebugOutput.clearcoat)  
 <a name="GltfState.DebugOutput.clearcoat.CLEARCOAT_ROUGHNESS"></a>
@@ -592,21 +587,14 @@ output the clear coat normal
 <a name="GltfState.DebugOutput.sheen"></a>
 
 #### DebugOutput.sheen
-output sheen lighting
+KHR_materials_sheen
 
 **Kind**: static property of [<code>DebugOutput</code>](#GltfState.DebugOutput)  
 
 * [.sheen](#GltfState.DebugOutput.sheen)
-    * [.SHEEN](#GltfState.DebugOutput.sheen.SHEEN)
     * [.SHEEN_COLOR](#GltfState.DebugOutput.sheen.SHEEN_COLOR)
     * [.SHEEN_ROUGHNESS](#GltfState.DebugOutput.sheen.SHEEN_ROUGHNESS)
 
-<a name="GltfState.DebugOutput.sheen.SHEEN"></a>
-
-##### sheen.SHEEN
-output the combined sheen
-
-**Kind**: static property of [<code>sheen</code>](#GltfState.DebugOutput.sheen)  
 <a name="GltfState.DebugOutput.sheen.SHEEN_COLOR"></a>
 
 ##### sheen.SHEEN\_COLOR
@@ -622,25 +610,18 @@ output the sheen roughness
 <a name="GltfState.DebugOutput.specular"></a>
 
 #### DebugOutput.specular
-output specular lighting
+KHR_materials_specular
 
 **Kind**: static property of [<code>DebugOutput</code>](#GltfState.DebugOutput)  
 
 * [.specular](#GltfState.DebugOutput.specular)
-    * [.SPECULAR](#GltfState.DebugOutput.specular.SPECULAR)
     * [.SPECULAR_FACTOR](#GltfState.DebugOutput.specular.SPECULAR_FACTOR)
     * [.SPECULAR_COLOR](#GltfState.DebugOutput.specular.SPECULAR_COLOR)
 
-<a name="GltfState.DebugOutput.specular.SPECULAR"></a>
-
-##### specular.SPECULAR
-output the combined specular
-
-**Kind**: static property of [<code>specular</code>](#GltfState.DebugOutput.specular)  
 <a name="GltfState.DebugOutput.specular.SPECULAR_FACTOR"></a>
 
 ##### specular.SPECULAR\_FACTOR
-output the specular factor
+output the specular strength
 
 **Kind**: static property of [<code>specular</code>](#GltfState.DebugOutput.specular)  
 <a name="GltfState.DebugOutput.specular.SPECULAR_COLOR"></a>
@@ -652,25 +633,18 @@ output the specular color
 <a name="GltfState.DebugOutput.transmission"></a>
 
 #### DebugOutput.transmission
-output tranmission lighting
+KHR_materials_transmission
 
 **Kind**: static property of [<code>DebugOutput</code>](#GltfState.DebugOutput)  
 
 * [.transmission](#GltfState.DebugOutput.transmission)
-    * [.TRANSMISSION_VOLUME](#GltfState.DebugOutput.transmission.TRANSMISSION_VOLUME)
     * [.TRANSMISSION_FACTOR](#GltfState.DebugOutput.transmission.TRANSMISSION_FACTOR)
     * [.VOLUME_THICKNESS](#GltfState.DebugOutput.transmission.VOLUME_THICKNESS)
 
-<a name="GltfState.DebugOutput.transmission.TRANSMISSION_VOLUME"></a>
-
-##### transmission.TRANSMISSION\_VOLUME
-output the combined transmission/volume
-
-**Kind**: static property of [<code>transmission</code>](#GltfState.DebugOutput.transmission)  
 <a name="GltfState.DebugOutput.transmission.TRANSMISSION_FACTOR"></a>
 
 ##### transmission.TRANSMISSION\_FACTOR
-output the transmission factor
+output the transmission strength
 
 **Kind**: static property of [<code>transmission</code>](#GltfState.DebugOutput.transmission)  
 <a name="GltfState.DebugOutput.transmission.VOLUME_THICKNESS"></a>
@@ -679,28 +653,44 @@ output the transmission factor
 output the volume thickness
 
 **Kind**: static property of [<code>transmission</code>](#GltfState.DebugOutput.transmission)  
+<a name="GltfState.DebugOutput.diffuseTransmission"></a>
+
+#### DebugOutput.diffuseTransmission
+KHR_materials_diffuse_tranmission
+
+**Kind**: static property of [<code>DebugOutput</code>](#GltfState.DebugOutput)  
+
+* [.diffuseTransmission](#GltfState.DebugOutput.diffuseTransmission)
+    * [.DIFFUSE_TRANSMISSION_FACTOR](#GltfState.DebugOutput.diffuseTransmission.DIFFUSE_TRANSMISSION_FACTOR)
+    * [.DIFFUSE_TRANSMISSION_COLOR_FACTOR](#GltfState.DebugOutput.diffuseTransmission.DIFFUSE_TRANSMISSION_COLOR_FACTOR)
+
+<a name="GltfState.DebugOutput.diffuseTransmission.DIFFUSE_TRANSMISSION_FACTOR"></a>
+
+##### diffuseTransmission.DIFFUSE\_TRANSMISSION\_FACTOR
+output the diffuse tranmission strength
+
+**Kind**: static property of [<code>diffuseTransmission</code>](#GltfState.DebugOutput.diffuseTransmission)  
+<a name="GltfState.DebugOutput.diffuseTransmission.DIFFUSE_TRANSMISSION_COLOR_FACTOR"></a>
+
+##### diffuseTransmission.DIFFUSE\_TRANSMISSION\_COLOR\_FACTOR
+output the diffuse tranmission color factor
+
+**Kind**: static property of [<code>diffuseTransmission</code>](#GltfState.DebugOutput.diffuseTransmission)  
 <a name="GltfState.DebugOutput.iridescence"></a>
 
 #### DebugOutput.iridescence
-output tranmission lighting
+KHR_materials_iridescence
 
 **Kind**: static property of [<code>DebugOutput</code>](#GltfState.DebugOutput)  
 
 * [.iridescence](#GltfState.DebugOutput.iridescence)
-    * [.IRIDESCENCE](#GltfState.DebugOutput.iridescence.IRIDESCENCE)
     * [.IRIDESCENCE_FACTOR](#GltfState.DebugOutput.iridescence.IRIDESCENCE_FACTOR)
     * [.IRIDESCENCE_THICKNESS](#GltfState.DebugOutput.iridescence.IRIDESCENCE_THICKNESS)
 
-<a name="GltfState.DebugOutput.iridescence.IRIDESCENCE"></a>
-
-##### iridescence.IRIDESCENCE
-output the combined iridescence
-
-**Kind**: static property of [<code>iridescence</code>](#GltfState.DebugOutput.iridescence)  
 <a name="GltfState.DebugOutput.iridescence.IRIDESCENCE_FACTOR"></a>
 
 ##### iridescence.IRIDESCENCE\_FACTOR
-output the iridescence factor
+output the iridescence strength
 
 **Kind**: static property of [<code>iridescence</code>](#GltfState.DebugOutput.iridescence)  
 <a name="GltfState.DebugOutput.iridescence.IRIDESCENCE_THICKNESS"></a>
@@ -709,6 +699,29 @@ output the iridescence factor
 output the iridescence thickness
 
 **Kind**: static property of [<code>iridescence</code>](#GltfState.DebugOutput.iridescence)  
+<a name="GltfState.DebugOutput.anisotropy"></a>
+
+#### DebugOutput.anisotropy
+KHR_materials_anisotropy
+
+**Kind**: static property of [<code>DebugOutput</code>](#GltfState.DebugOutput)  
+
+* [.anisotropy](#GltfState.DebugOutput.anisotropy)
+    * [.ANISOTROPIC_STRENGTH](#GltfState.DebugOutput.anisotropy.ANISOTROPIC_STRENGTH)
+    * [.ANISOTROPIC_DIRECTION](#GltfState.DebugOutput.anisotropy.ANISOTROPIC_DIRECTION)
+
+<a name="GltfState.DebugOutput.anisotropy.ANISOTROPIC_STRENGTH"></a>
+
+##### anisotropy.ANISOTROPIC\_STRENGTH
+output the anisotropic strength
+
+**Kind**: static property of [<code>anisotropy</code>](#GltfState.DebugOutput.anisotropy)  
+<a name="GltfState.DebugOutput.anisotropy.ANISOTROPIC_DIRECTION"></a>
+
+##### anisotropy.ANISOTROPIC\_DIRECTION
+output final direction as defined by the anisotropyTexture and rotation
+
+**Kind**: static property of [<code>anisotropy</code>](#GltfState.DebugOutput.anisotropy)  
 <a name="ResourceLoader"></a>
 
 ## ResourceLoader
@@ -718,7 +731,7 @@ that are then used to display the loaded data with GltfView
 **Kind**: global class  
 
 * [ResourceLoader](#ResourceLoader)
-    * [new ResourceLoader(view)](#new_ResourceLoader_new)
+    * [new ResourceLoader(view, libPath)](#new_ResourceLoader_new)
     * [.loadGltf(gltfFile, [externalFiles])](#ResourceLoader+loadGltf) ⇒ <code>Promise</code>
     * [.loadEnvironment(environmentFile, [lutFiles])](#ResourceLoader+loadEnvironment) ⇒ <code>Promise</code>
     * [.initKtxLib([externalKtxLib])](#ResourceLoader+initKtxLib)
@@ -726,16 +739,17 @@ that are then used to display the loaded data with GltfView
 
 <a name="new_ResourceLoader_new"></a>
 
-### new ResourceLoader(view)
+### new ResourceLoader(view, libPath)
 ResourceLoader class that provides an interface to load resources into
 the view. Typically this is created with GltfView.createResourceLoader()
 You cannot share resource loaders between GltfViews as some of the resources
 are allocated directly on the WebGl2 Context
 
 
-| Param | Type | Description |
-| --- | --- | --- |
-| view | <code>Object</code> | the GltfView for which the resources are loaded |
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| view | <code>Object</code> |  | the GltfView for which the resources are loaded |
+| libPath | <code>String</code> | <code>./libs/</code> | path to the lib folder. This can be used to find the WASM files if sample viewer is repackaged |
 
 <a name="ResourceLoader+loadGltf"></a>
 
@@ -805,6 +819,7 @@ initDracoLib must be called before loading gltf files with draco meshes
     * [.zoomBy(value)](#UserCamera+zoomBy)
     * [.orbit(x, y)](#UserCamera+orbit)
     * [.pan(x, y)](#UserCamera+pan)
+    * [.resetView(gltf, sceneIndex)](#UserCamera+resetView)
     * [.fitViewToScene(gltf, sceneIndex)](#UserCamera+fitViewToScene)
 
 <a name="new_UserCamera_new"></a>
@@ -952,11 +967,23 @@ The axes are inverted: e.g. if y is positive the camera will move down.
 | x | <code>number</code> | 
 | y | <code>number</code> | 
 
+<a name="UserCamera+resetView"></a>
+
+### userCamera.resetView(gltf, sceneIndex)
+Calculates a camera position which looks at the center of the scene from an appropriate distance.
+This calculates near and far plane as well.
+
+**Kind**: instance method of [<code>UserCamera</code>](#UserCamera)  
+
+| Param | Type |
+| --- | --- |
+| gltf | <code>Gltf</code> | 
+| sceneIndex | <code>number</code> | 
+
 <a name="UserCamera+fitViewToScene"></a>
 
 ### userCamera.fitViewToScene(gltf, sceneIndex)
-Calculates a camera position which looks at the center of the scene from an appropriate distance.
-This calculates near and far plane as well.
+Fit view to updated canvas size without changing rotation if distance is incorrect
 
 **Kind**: instance method of [<code>UserCamera</code>](#UserCamera)  
 

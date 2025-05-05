@@ -3,6 +3,7 @@ import { GltfObject } from './gltf_object';
 
 class gltfScene extends GltfObject
 {
+    static animatedProperties = [];
     constructor(nodes = [], name = undefined)
     {
         super();
@@ -32,6 +33,16 @@ class gltfScene extends GltfObject
             mat4.multiply(node.worldTransform, parentTransform, node.getLocalTransform());
             mat4.invert(node.inverseWorldTransform, node.worldTransform);
             mat4.transpose(node.normalMatrix, node.inverseWorldTransform);
+
+            if (node.instanceMatrices) {
+                node.instanceWorldTransforms = [];
+                for (let i = 0; i < node.instanceMatrices.length; i++) {
+                    const instanceTransform = node.instanceMatrices[i];
+                    const instanceWorldTransform = mat4.create();
+                    mat4.multiply(instanceWorldTransform, node.worldTransform, instanceTransform);
+                    node.instanceWorldTransforms.push(instanceWorldTransform);
+                }
+            }
 
             for (const child of node.children)
             {
